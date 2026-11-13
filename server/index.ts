@@ -1,0 +1,23 @@
+import express from 'express'
+import { createInBlender, blenderStatus } from './mcp.js'
+import { validateDesign, type HandleDesign } from '../src/lib/design.js'
+
+const app = express()
+app.use(express.json({ limit: '32kb' }))
+app.get('/api/blender/status', async (_request, response) => response.json(await blenderStatus()))
+app.post('/api/blender/create', async (request, response) => {
+  const design = request.body as HandleDesign
+  const validationError = validateDesign(design)
+  if (validationError) return response.status(400).json({ error: validationError })
+  try { response.json(await createInBlender(design)) }
+  catch { response.status(503).json({ error: 'Blender is not connected. Start npm run mcp, then enable the Blender MCP add-on and click Connect to MCP.' }) }
+})
+app.post('/api/blender/export', async (request, response) => {
+  const design = request.body as HandleDesign
+  const validationError = validateDesign(design)
+  if (validationError) return response.status(400).json({ error: validationError })
+  try { response.json(await createInBlender(design, true)) }
+  catch { response.status(503).json({ error: 'A Blender connection is required for .blend export. See the Guide for setup instructions.' }) }
+})
+const port = Number(process.env.API_PORT || 3001)
+app.listen(port, '127.0.0.1', () => console.log(`Aperture local API listening on http://127.0.0.1:${port}`))

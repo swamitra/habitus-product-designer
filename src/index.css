@@ -1,0 +1,16 @@
+@import '@fontsource-variable/manrope';
+@import '@fontsource/ibm-plex-mono/400.css';
+
+:root { font-family: 'Manrope Variable', sans-serif; color: #292d29; background: #f7f8f5; font-synthesis: none; text-rendering: optimizeLegibility; -webkit-font-smoothing: antialiased; --accent: #d8ed83; --ink: #292d29; --muted: #858a81; --line: #e2e5dd; --mono: 'IBM Plex Mono', monospace; }
+* { box-sizing: border-box; }
+body { margin: 0; }
+button, input { font: inherit; }
+button, a { -webkit-tap-highlight-color: transparent; }
+button { cursor: pointer; }
+button { color: inherit; }
+button:focus-visible, a:focus-visible, input:focus-visible { outline: 2px solid #71843d; outline-offset: 4px; }
+button:disabled { cursor: wait; opacity: .65; }
+button, a { transition: background .18s, color .18s, border-color .18s, transform .18s; }
+button:active { transform: translateY(1px); }
+button svg { flex-shrink: 0; }
+::selection { background: var(--accent); }

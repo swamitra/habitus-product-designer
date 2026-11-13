@@ -1,0 +1,18 @@
+import { describe, expect, it } from 'vitest'
+import { defaultDesign, validateDesign } from './design'
+import { createHandleGroup } from './geometry'
+
+describe('handle design', () => {
+  it('accepts the default pull handle', () => expect(validateDesign(defaultDesign)).toBeNull())
+  it('rejects dimensions outside the manufacturing range', () => expect(validateDesign({ ...defaultDesign, length: 10 })).toContain('length'))
+  it('rejects a rose smaller than the bar', () => expect(validateDesign({ ...defaultDesign, roseDiameter: 25, diameter: 30 })).toContain('Rose'))
+  it('creates a pull handle with two roses and three bar segments', () => {
+    const model = createHandleGroup(defaultDesign)
+    expect(model.children).toHaveLength(9)
+    expect(model.name).toBe('Linear 01')
+  })
+  it('creates a lever handle with one rose', () => {
+    const model = createHandleGroup({ ...defaultDesign, type: 'lever', length: 130, roseDiameter: 52 })
+    expect(model.children).toHaveLength(7)
+  })
+})
