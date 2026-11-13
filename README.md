@@ -31,6 +31,11 @@ npm run mcp
 
 ## Features
 
+- Natural-language design mode for people without product-design experience
+- A dedicated Product Designer subagent with a proportion, material, and restraint framework in `.github/agents/product-designer.agent.md`
+- Offline interpretation of common objects, shapes, materials, dimensions, and follow-up requests
+- Rounded doors, straight and half-circle handles, and integrated bird details
+- Marble, oak, brushed gold, graphite, steel, bronze, and black materials
 - Pull and lever handle types with editable dimensions
 - Round, square, and soft-square profiles
 - Graphite, brushed steel, dark bronze, and matt black finishes

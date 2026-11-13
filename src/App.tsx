@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { ArrowLineDown, ArrowUpRight, Check, CaretDown, Question, Cube, Download, GridFour, Link, Plus, ArrowsClockwise, SlidersHorizontal, X } from '@phosphor-icons/react'
 import { HandleModel } from './components/HandleModel'
+import { IdeaStudio } from './components/IdeaStudio'
 import { defaultDesign, downloadJson, finishes, presets, validateDesign, type HandleDesign, type HandleType, type ProfileId } from './lib/design'
 import './App.css'
 
@@ -15,6 +16,7 @@ export default function App() {
     try { return JSON.parse(localStorage.getItem('aperture-design') || 'null') ?? defaultDesign } catch { return defaultDesign }
   })
   const [modal, setModal] = useState<Modal>(null)
+  const [editorMode, setEditorMode] = useState<'idea' | 'details'>('idea')
   const [autoRotate, setAutoRotate] = useState(false)
   const [showGrid, setShowGrid] = useState(false)
   const [toast, setToast] = useState('')
@@ -73,7 +75,7 @@ export default function App() {
     </header>
 
     <main className="workspace">
-      <aside className="control-panel">
+      {editorMode === 'idea' ? <IdeaStudio design={design} onDesign={setDesign} onFineTune={() => setEditorMode('details')} /> : <aside className="control-panel">
         <div className="panel-heading"><div><span className="eyebrow">PRODUCT CONFIGURATOR</span><h1>Shape the everyday.</h1></div><SlidersHorizontal size={19} /></div>
         <section className="control-section"><div className="section-title"><span>Handle type</span><span className="section-index">01</span></div><div className="type-switch"><button className={design.type === 'pull' ? 'selected' : ''} onClick={() => changeType('pull')}><span className="pull-icon" />Pull handle</button><button className={design.type === 'lever' ? 'selected' : ''} onClick={() => changeType('lever')}><span className="lever-icon" />Lever handle</button></div></section>
         <section className="control-section"><div className="section-title"><span>Dimensions</span><span className="section-index">02</span></div>
@@ -84,14 +86,14 @@ export default function App() {
         </section>
         <section className="control-section"><div className="section-title"><span>Bar profile</span><span className="section-index">03</span></div><div className="profile-switch">{(['round', 'square', 'soft'] as ProfileId[]).map((profile) => <button key={profile} className={design.profile === profile ? 'selected' : ''} onClick={() => update('profile', profile)}><span className={`profile-shape ${profile}`} />{profile === 'soft' ? 'Soft square' : profile.charAt(0).toUpperCase() + profile.slice(1)}</button>)}</div></section>
         <section className="control-section finish-section"><div className="section-title"><span>Finish</span><span className="finish-name">{finishes.find((finish) => finish.id === design.finish)?.name}</span></div><div className="finish-options">{finishes.map((finish) => <button key={finish.id} className={`finish-swatch ${finish.id} ${design.finish === finish.id ? 'selected' : ''}`} style={{ '--swatch': finish.color } as React.CSSProperties} onClick={() => update('finish', finish.id)} aria-label={finish.name} title={finish.name}>{design.finish === finish.id && <Check size={15} weight="bold" />}</button>)}</div></section>
-        <div className="panel-bottom"><button className="reset-button" onClick={() => setDesign(defaultDesign)}>Reset to default</button><span>All dimensions in millimetres</span></div>
-      </aside>
+        <div className="panel-bottom"><button className="reset-button" onClick={() => setEditorMode('idea')}>Back to your idea</button><button className="reset-button" onClick={() => setDesign(defaultDesign)}>Reset to default</button><span>All dimensions in millimetres</span></div>
+      </aside>}
 
       <section className="viewport-panel">
         <div className="viewport-top"><div className="project-name"><span className="project-label">CURRENT DESIGN</span><input aria-label="Design name" value={design.name} onChange={(event) => update('name', event.target.value)} /><span className="saved-label"><Check size={12} /> Saved locally</span></div><button className="icon-button help-button" onClick={() => setModal('help')} aria-label="Open guide"><Question size={20} /></button></div>
-        <div className="canvas-wrap"><HandleModel design={design} autoRotate={autoRotate} showGrid={showGrid} /><div className="view-label"><Cube size={14} /> Perspective <CaretDown size={12} /></div><div className="model-caption"><span>{design.type === 'pull' ? 'PULL HANDLE' : 'LEVER HANDLE'}</span><strong>{design.name}</strong><span>{finishes.find((finish) => finish.id === design.finish)?.name} / {design.profile === 'soft' ? 'Soft square' : design.profile} profile</span></div><div className="axis-gizmo"><span className="axis-y">Y</span><span className="axis-z">Z</span><span className="axis-x">X</span><i /></div></div>
+        <div className="canvas-wrap"><HandleModel design={design} autoRotate={autoRotate} showGrid={showGrid} /><div className="view-label"><Cube size={14} /> Perspective <CaretDown size={12} /></div><div className="model-caption"><span>{design.productType === 'door' ? 'DOOR CONCEPT' : design.type === 'pull' ? 'PULL HANDLE' : 'LEVER HANDLE'}</span><strong>{design.name}</strong><span>{finishes.find((finish) => finish.id === design.finish)?.name} / {design.profile === 'soft' ? 'Soft square' : design.profile} profile</span></div><div className="axis-gizmo"><span className="axis-y">Y</span><span className="axis-z">Z</span><span className="axis-x">X</span><i /></div></div>
         <div className="viewport-toolbar"><div><button className={autoRotate ? 'active' : ''} onClick={() => setAutoRotate(!autoRotate)}><ArrowsClockwise size={17} />{autoRotate ? 'Stop rotation' : 'Auto rotate'}</button><button className={showGrid ? 'active' : ''} onClick={() => setShowGrid(!showGrid)}><GridFour size={16} />Grid</button></div><span>Drag to orbit <i /> Scroll to zoom</span></div>
-        <div className="spec-strip"><div><span>OVERALL LENGTH</span><strong>{design.length}<small> mm</small></strong></div><div><span>PROJECTION</span><strong>{design.projection}<small> mm</small></strong></div><div><span>BAR DIAMETER</span><strong>{design.diameter}<small> mm</small></strong></div><div className="spec-material"><span>MATERIAL</span><strong>{finishes.find((finish) => finish.id === design.finish)?.name}</strong></div></div>
+        <div className="spec-strip"><div><span>{design.productType === 'door' ? 'WIDTH' : 'OVERALL LENGTH'}</span><strong>{design.productType === 'door' ? design.width : design.length}<small> mm</small></strong></div><div><span>{design.productType === 'door' ? 'HEIGHT' : 'PROJECTION'}</span><strong>{design.productType === 'door' ? design.height : design.projection}<small> mm</small></strong></div><div><span>{design.productType === 'door' ? 'THICKNESS' : 'BAR DIAMETER'}</span><strong>{design.productType === 'door' ? design.thickness : design.diameter}<small> mm</small></strong></div><div className="spec-material"><span>MATERIAL</span><strong>{finishes.find((finish) => finish.id === design.finish)?.name}</strong></div></div>
       </section>
 
       <aside className="action-panel"><div className="action-heading"><Cube size={20} /><h2>From screen<br />to solid.</h2><p>Your design is ready for the next step.</p></div><div className="blender-card"><div className="blender-title"><span className="blender-symbol">b</span><div><strong>Blender</strong><span>Parametric connection</span></div><span className={`connection-dot ${blenderStatus}`} /></div><p>{blenderStatus === 'connected' ? 'Connected. Your model will be created in the active Blender scene.' : 'Create an editable model in Blender through your local MCP connection.'}</p><button className="primary-button" onClick={sendToBlender} disabled={sending}>{sending ? 'Creating model...' : 'Send to Blender'}<ArrowUpRight size={17} /></button><button className="text-button" onClick={() => setModal('help')}>{blenderStatus === 'connected' ? 'Connection settings' : 'How to connect'}<ArrowUpRight size={13} /></button></div><div className="secondary-actions"><button onClick={() => setModal('export')}><Download size={17} /><span>Export model<small>GLB or Blender file</small></span><ArrowUpRight size={14} /></button><button onClick={() => { downloadJson(design); notify('Design specification downloaded.') }}><ArrowLineDown size={17} /><span>Save specification<small>Dimensions and finish</small></span><ArrowUpRight size={14} /></button></div><div className="action-note"><span>Designed for the details.</span><p>Every dimension, profile, and finish is yours to define.</p></div></aside>

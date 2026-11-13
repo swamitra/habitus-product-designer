@@ -1,6 +1,9 @@
 export type HandleType = 'pull' | 'lever'
-export type FinishId = 'graphite' | 'steel' | 'bronze' | 'black'
+export type FinishId = 'graphite' | 'steel' | 'bronze' | 'black' | 'gold' | 'marble' | 'oak'
 export type ProfileId = 'round' | 'square' | 'soft'
+export type ProductType = 'handle' | 'door'
+export type HandleShape = 'straight' | 'half-circle'
+export type Ornament = 'none' | 'bird'
 
 export interface HandleDesign {
   name: string
@@ -12,6 +15,13 @@ export interface HandleDesign {
   diameter: number
   roseDiameter: number
   returnAngle: number
+  productType?: ProductType
+  shape?: HandleShape
+  ornament?: Ornament
+  width?: number
+  height?: number
+  thickness?: number
+  cornerRadius?: number
 }
 
 export const finishes: { id: FinishId; name: string; color: string; metalness: number; roughness: number }[] = [
@@ -19,6 +29,9 @@ export const finishes: { id: FinishId; name: string; color: string; metalness: n
   { id: 'steel', name: 'Brushed steel', color: '#b9bdba', metalness: 0.95, roughness: 0.27 },
   { id: 'bronze', name: 'Dark bronze', color: '#75604b', metalness: 0.9, roughness: 0.34 },
   { id: 'black', name: 'Matt black', color: '#252827', metalness: 0.45, roughness: 0.58 },
+  { id: 'gold', name: 'Brushed gold', color: '#b99b52', metalness: 0.88, roughness: 0.3 },
+  { id: 'marble', name: 'White marble', color: '#d9d9d2', metalness: 0.02, roughness: 0.38 },
+  { id: 'oak', name: 'Natural oak', color: '#a88458', metalness: 0, roughness: 0.65 },
 ]
 
 export const defaultDesign: HandleDesign = {
@@ -33,6 +46,11 @@ export const presets: { name: string; description: string; design: HandleDesign 
 ]
 
 export function validateDesign(design: HandleDesign) {
+  if (design.productType === 'door') {
+    if (!design.width || design.width < 500 || design.width > 1600) return 'Door width must be between 500 and 1600 mm.'
+    if (!design.height || design.height < 1800 || design.height > 3000) return 'Door height must be between 1800 and 3000 mm.'
+    return null
+  }
   const limits = design.type === 'pull'
     ? { length: [150, 1200], projection: [35, 100], diameter: [12, 40], roseDiameter: [25, 80] }
     : { length: [90, 180], projection: [40, 75], diameter: [12, 30], roseDiameter: [40, 70] }
