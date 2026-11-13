@@ -61,6 +61,16 @@ The manufacturing and modeling tools are separated for independent enhancement:
 
 STEP output currently contains reference solids for the spindle and escutcheons, not a complete manufacturing CAD model. NC output is limited to simple drilling cycles. It is not a production-ready toolpath and must be checked by a qualified CNC operator against the actual machine, post-processor, tooling, material, workholding, and offsets.
 
+## Vercel deployment
+
+The repository includes `vercel.json` for the Vite production build. Connect the GitHub repository in Vercel, or run:
+
+```bash
+vercel --prod
+```
+
+The hosted app supports natural-language design, 3D preview, local browser persistence, and GLB, STEP, NC, and JSON exports. Blender MCP creation and `.blend` export require the local development server and Blender add-on; a hosted Vercel function cannot connect to Blender on your computer.
+
 ## Validation
 
 ```bash
