@@ -8,11 +8,14 @@ describe('handle design', () => {
   it('rejects a rose smaller than the bar', () => expect(validateDesign({ ...defaultDesign, roseDiameter: 25, diameter: 30 })).toContain('Rose'))
   it('creates a pull handle with two roses and three bar segments', () => {
     const model = createHandleGroup(defaultDesign)
-    expect(model.children).toHaveLength(9)
+    expect(model.children.map((part) => part.name)).toContain('Exterior handle')
+    expect(model.children.map((part) => part.name)).toContain('Interior handle')
+    expect(model.children.map((part) => part.name)).toContain('8 mm square spindle')
     expect(model.name).toBe('Linear 01')
   })
   it('creates a lever handle with one rose', () => {
     const model = createHandleGroup({ ...defaultDesign, type: 'lever', length: 130, roseDiameter: 52 })
-    expect(model.children).toHaveLength(7)
+    expect(model.children.map((part) => part.name)).toContain('Interior handle')
+    expect(model.children.map((part) => part.name)).toContain('Keyhole detail')
   })
 })

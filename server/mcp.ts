@@ -32,7 +32,7 @@ export async function createInBlender(design: HandleDesign, exportBlend = false)
   const safeName = design.name.replace(/[^a-zA-Z0-9_-]/g, '-')
   const exportPath = resolve('public/exports', `${safeName}.blend`)
   const exportCode = exportBlend ? `\nbpy.ops.wm.save_as_mainfile(filepath=${JSON.stringify(exportPath)})\nprint('Saved ${safeName}.blend')` : ''
-  const code = template.replace('DESIGN_JSON', JSON.stringify(design)) + exportCode
+  const code = template.replace('DESIGN_JSON', `json.loads(${JSON.stringify(JSON.stringify(design))})`) + exportCode
   const result = await client.callTool({ name: 'execute_blender_code', arguments: { code, user_prompt: 'Create the configured architectural door handle in Blender.' } })
   const text = result.content.map((item) => item.type === 'text' ? item.text : '').join('\n')
   if (result.isError || !text.includes('Created Aperture')) throw new Error(text || 'Blender did not create the model. Check that the add-on is connected.')

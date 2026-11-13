@@ -43,7 +43,23 @@ npm run mcp
 - Local design persistence and reusable templates
 - Direct GLB export without Blender
 - Editable Blender scene creation and native `.blend` export through MCP
+- Exterior and interior handle pairs, square spindles, round roses, long escutcheons, and exploded views
+- STEP reference geometry for spindle and escutcheon components
+- Configurable drilling-only `.nc` concept output with explicit machine-verification warnings
 - JSON specification export
+
+## Tool architecture
+
+The manufacturing and modeling tools are separated for independent enhancement:
+
+- `src/tools/geometry`: assembly components and view logic
+- `src/tools/cad`: CAD reference exporters
+- `src/tools/cam`: machining operations and settings
+- `src/tools/export`: shared download utilities
+- `src/tools/blender`: Blender integration boundary
+- `blender`: native Blender geometry generation
+
+STEP output currently contains reference solids for the spindle and escutcheons, not a complete manufacturing CAD model. NC output is limited to simple drilling cycles. It is not a production-ready toolpath and must be checked by a qualified CNC operator against the actual machine, post-processor, tooling, material, workholding, and offsets.
 
 ## Validation
 

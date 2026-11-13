@@ -1,5 +1,6 @@
 import * as THREE from 'three'
 import { finishes, type HandleDesign } from './design'
+import { applyAssemblyView, createAssemblyParts } from '../tools/geometry/assembly'
 
 export function createHandleGroup(design: HandleDesign) {
   const group = new THREE.Group()
@@ -67,6 +68,11 @@ export function createHandleGroup(design: HandleDesign) {
     const geometry = new THREE.ExtrudeGeometry(bird, { depth: 0.004, bevelEnabled: true, bevelSize: 0.001, bevelThickness: 0.001, bevelSegments: 2 })
     addMesh(geometry, new THREE.Vector3(0, design.shape === 'half-circle' ? length / 2 : 0, projection + radius))
   }
-  group.rotation.set(0.12, -0.35, isPull ? -0.08 : 0)
-  return group
+  const assembly = new THREE.Group()
+  assembly.name = design.name
+  const parts = createAssemblyParts(design, group)
+  applyAssemblyView(parts, design.assemblyView)
+  parts.forEach((part) => assembly.add(part.object))
+  assembly.rotation.set(0.12, -0.35, isPull ? -0.08 : 0)
+  return assembly
 }

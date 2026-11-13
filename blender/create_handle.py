@@ -151,6 +151,35 @@ if design.get('ornament') == 'bird' and not design.get('productType'):
     solidify = obj.modifiers.new('Relief depth', 'SOLIDIFY')
     solidify.thickness = 0.004
 
+if not design.get('productType'):
+    door_thickness = design.get('doorThickness', 44) / 1000
+    spindle_size = design.get('spindleSize', 8) / 1000
+    spindle_length = design.get('spindleLength', design.get('doorThickness', 44) + 56) / 1000
+    for obj in list(collection.objects):
+        obj.location.z += door_thickness / 2
+        obj['Assembly side'] = 'Exterior'
+        if design.get('includePair', True):
+            interior = obj.copy()
+            interior.data = obj.data.copy()
+            interior.name = obj.name.replace('Exterior', '') + ' | Interior'
+            collection.objects.link(interior)
+            interior.rotation_euler.rotate_axis('Y', math.pi)
+            interior.location.z = -obj.location.z
+            interior['Assembly side'] = 'Interior'
+    bpy.ops.mesh.primitive_cube_add(size=1, location=(0, 0, 0))
+    spindle = move_to_collection(bpy.context.object)
+    spindle.name = str(design.get('spindleSize', 8)) + ' mm square spindle'
+    spindle.dimensions = (spindle_size, spindle_size, spindle_length)
+    bpy.ops.object.transform_apply(location=False, rotation=False, scale=True)
+    bevel = spindle.modifiers.new('Spindle edge break', 'BEVEL')
+    bevel.width = 0.0003
+    bevel.segments = 2
+    if design.get('escutcheon') == 'long-plate':
+        for obj in list(collection.objects):
+            if 'rose' in obj.name.lower():
+                obj.scale = (0.85, 1.0, 3.0 if design['type'] == 'lever' else 1.8)
+                obj.name = obj.name.replace('rose', 'long escutcheon')
+
 bpy.context.scene.unit_settings.system = 'METRIC'
 bpy.context.scene.unit_settings.length_unit = 'MILLIMETERS'
 for obj in collection.objects:

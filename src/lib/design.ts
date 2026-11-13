@@ -4,6 +4,8 @@ export type ProfileId = 'round' | 'square' | 'soft'
 export type ProductType = 'handle' | 'door'
 export type HandleShape = 'straight' | 'half-circle'
 export type Ornament = 'none' | 'bird'
+export type EscutcheonType = 'round-rose' | 'long-plate'
+export type AssemblyView = 'pair' | 'exterior' | 'interior' | 'exploded'
 
 export interface HandleDesign {
   name: string
@@ -22,6 +24,13 @@ export interface HandleDesign {
   height?: number
   thickness?: number
   cornerRadius?: number
+  escutcheon?: EscutcheonType
+  doorThickness?: number
+  spindleSize?: number
+  spindleLength?: number
+  includePair?: boolean
+  assemblyView?: AssemblyView
+  fixing?: 'concealed' | 'visible'
 }
 
 export const finishes: { id: FinishId; name: string; color: string; metalness: number; roughness: number }[] = [
@@ -37,6 +46,8 @@ export const finishes: { id: FinishId; name: string; color: string; metalness: n
 export const defaultDesign: HandleDesign = {
   name: 'Linear 01', type: 'pull', finish: 'graphite', profile: 'round',
   length: 300, projection: 55, diameter: 19, roseDiameter: 38, returnAngle: 90,
+  escutcheon: 'round-rose', doorThickness: 44, spindleSize: 8, spindleLength: 100,
+  includePair: true, assemblyView: 'pair', fixing: 'concealed',
 }
 
 export const presets: { name: string; description: string; design: HandleDesign }[] = [
@@ -59,6 +70,8 @@ export function validateDesign(design: HandleDesign) {
     if (value < min || value > max) return `${key} must be between ${min} and ${max} mm.`
   }
   if (design.roseDiameter < design.diameter) return 'Rose diameter must be greater than the bar diameter.'
+  if (design.doorThickness && (design.doorThickness < 30 || design.doorThickness > 80)) return 'Door thickness must be between 30 and 80 mm.'
+  if (design.spindleSize && ![8, 9, 10].includes(design.spindleSize)) return 'Spindle must be 8, 9, or 10 mm square.'
   return null
 }
 
