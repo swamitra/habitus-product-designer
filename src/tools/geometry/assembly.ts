@@ -45,10 +45,21 @@ export function createAssemblyParts(design: HandleDesign, handle: THREE.Group): 
     }
   }
 
-  const spindleGeometry = new THREE.BoxGeometry(spindle / 1000, spindle / 1000, spindleLength)
-  const spindleMesh = new THREE.Mesh(spindleGeometry, new THREE.MeshStandardMaterial({ color: '#777d78', metalness: 0.9, roughness: 0.3 }))
-  spindleMesh.name = `${spindle} mm square spindle`
-  parts.push({ id: 'spindle', role: 'spindle', object: spindleMesh })
+  const fixingMaterial = new THREE.MeshStandardMaterial({ color: '#777d78', metalness: 0.9, roughness: 0.3 })
+  if (design.type === 'pull') {
+    // Pull handles are bolted through the door at each leg. Only levers turn on a spindle.
+    for (const [index, x] of platePositions.entries()) {
+      const bolt = new THREE.Mesh(new THREE.CylinderGeometry(0.003, 0.003, thickness + 0.04, 24), fixingMaterial)
+      bolt.name = `M6 back-to-back fixing ${index + 1}`
+      bolt.rotation.x = Math.PI / 2
+      bolt.position.x = x
+      parts.push({ id: bolt.name, role: 'fixing', object: bolt })
+    }
+  } else {
+    const spindleMesh = new THREE.Mesh(new THREE.BoxGeometry(spindle / 1000, spindle / 1000, spindleLength), fixingMaterial)
+    spindleMesh.name = `${spindle} mm square spindle`
+    parts.push({ id: 'spindle', role: 'spindle', object: spindleMesh })
+  }
 
   if (design.type === 'lever') {
     const keyhole = new THREE.Mesh(new THREE.CylinderGeometry(0.009, 0.009, 0.002, 32), new THREE.MeshStandardMaterial({ color: '#252a26', metalness: 0.4, roughness: 0.5 }))

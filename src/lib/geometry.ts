@@ -43,7 +43,7 @@ export function createHandleGroup(design: HandleDesign) {
   const roseRadius = design.roseDiameter / 2000
   const isPull = design.type === 'pull'
   const points: [number, number, number][] = design.shape === 'half-circle'
-    ? Array.from({ length: 33 }, (_, index) => { const angle = Math.PI - index * Math.PI / 32; return [Math.cos(angle) * length / 2, Math.sin(angle) * length / 2, projection] as [number, number, number] })
+    ? [[-length / 2, 0, 0], ...Array.from({ length: 33 }, (_, index) => { const angle = Math.PI - index * Math.PI / 32; return [Math.cos(angle) * length / 2, Math.sin(angle) * length / 2, projection] as [number, number, number] }), [length / 2, 0, 0]]
     : isPull
     ? [[-length / 2, 0, 0], [-length / 2, 0, projection], [length / 2, 0, projection], [length / 2, 0, 0]]
     : [[0, 0, 0], [0, 0, projection * 0.72], [Math.sin(design.returnAngle * Math.PI / 180) * length * 0.25, 0, projection], [length, 0, projection]]
@@ -62,7 +62,7 @@ export function createHandleGroup(design: HandleDesign) {
     addMesh(new THREE.CylinderGeometry(roseRadius, roseRadius, 0.009, 64), new THREE.Vector3(x, 0, 0), quaternion)
     addMesh(new THREE.CylinderGeometry(radius * 1.35, radius * 1.35, 0.012, 48), new THREE.Vector3(x, 0, 0.006), quaternion)
   })
-  if (design.shape !== 'half-circle') points.slice(1, -1).forEach((point) => addMesh(new THREE.SphereGeometry(radius * (design.profile === 'round' ? 1 : 0.93), 32, 24), new THREE.Vector3(...point)))
+  ;(design.shape === 'half-circle' ? [points[1], points[points.length - 2]] : points.slice(1, -1)).forEach((point) => addMesh(new THREE.SphereGeometry(radius * (design.profile === 'round' ? 1 : 0.93), 32, 24), new THREE.Vector3(...point)))
   if (design.ornament === 'bird') {
     const bird = new THREE.Shape(); bird.moveTo(-0.065, 0); bird.quadraticCurveTo(-0.025, 0.055, 0, 0.012); bird.quadraticCurveTo(0.035, 0.065, 0.075, 0.045); bird.quadraticCurveTo(0.045, 0.025, 0.025, -0.005); bird.lineTo(0.055, -0.025); bird.lineTo(0.015, -0.018); bird.quadraticCurveTo(-0.025, -0.04, -0.065, 0)
     const geometry = new THREE.ExtrudeGeometry(bird, { depth: 0.004, bevelEnabled: true, bevelSize: 0.001, bevelThickness: 0.001, bevelSegments: 2 })

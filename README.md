@@ -21,7 +21,7 @@ Open `http://localhost:5173`. The Vite server and local API start together.
 4. In the 3D View sidebar, open **MCP for Blender** and click **Connect to MCP**.
 5. Return to Aperture and click **Send to Blender**.
 
-The app starts the official `blender-mcp` MCP server through `uv` and communicates with it using the Model Context Protocol TypeScript SDK. The server connects to Blender's local add-on on port 9876. No model data is sent to an external service.
+The app starts the official `blender-mcp` MCP server through `uv` and communicates with it using the Model Context Protocol TypeScript SDK. The server connects to Blender's local add-on on port 9876. The app starts that server with its usage telemetry disabled, so no model data is sent to an external service.
 
 To run the MCP service independently:
 
@@ -43,7 +43,7 @@ npm run mcp
 - Local design persistence and reusable templates
 - Direct GLB export without Blender
 - Editable Blender scene creation and native `.blend` export through MCP
-- Exterior and interior handle pairs, square spindles, round roses, long escutcheons, and exploded views
+- Exterior and interior handle pairs, lever spindles, through-bolt fixings for pulls, round roses, long escutcheons, and exploded views
 - STEP reference geometry for spindle and escutcheon components
 - Configurable drilling-only `.nc` concept output with explicit machine-verification warnings
 - JSON specification export
