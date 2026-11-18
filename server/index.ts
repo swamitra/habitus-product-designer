@@ -5,6 +5,7 @@ import { generateCad } from './cad.js'
 
 const app = express()
 app.use(express.json({ limit: '32kb' }))
+app.get('/api/cad/health', (_request, response) => response.json({ available: true, kernel: 'build123d/OpenCascade' }))
 app.get('/api/blender/status', async (_request, response) => response.json(await blenderStatus()))
 app.post('/api/blender/create', async (request, response) => {
   const design = request.body as HandleDesign

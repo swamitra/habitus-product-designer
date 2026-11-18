@@ -79,7 +79,7 @@ The repository includes `vercel.json` for the Vite production build. Connect the
 vercel --prod
 ```
 
-The hosted app supports natural-language design, 3D preview, local browser persistence, and GLB, STEP, NC, and JSON exports. Blender MCP creation and `.blend` export require the local development server and Blender add-on; a hosted Vercel function cannot connect to Blender on your computer.
+The hosted app supports natural-language design, 3D preview, local browser persistence, and GLB, NC, and JSON exports. STEP and DXF generation requires the local OpenCascade service (`npm run dev`) or a separately hosted container CAD service. OpenCascade exceeds Vercel's serverless bundle limit, so no nonfunctional hosted CAD endpoint is advertised. Blender MCP creation and `.blend` export also require the local development server and Blender add-on.
 
 ## Validation
 

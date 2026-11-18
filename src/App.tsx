@@ -31,6 +31,7 @@ export default function App() {
   const [exportFormat, setExportFormat] = useState<'glb' | 'blend' | 'step' | 'dxf' | 'nc'>('glb')
   const [exportUrl, setExportUrl] = useState('')
   const [exportError, setExportError] = useState('')
+  const [cadAvailable, setCadAvailable] = useState(false)
   const update = <K extends keyof HandleDesign>(key: K, value: HandleDesign[K]) => setDesign((current) => ({ ...current, [key]: value }))
   const changeType = (type: HandleType) => setDesign((current) => ({ ...current, type, ...(type === 'lever' ? { length: 130, projection: 52, roseDiameter: 52, returnAngle: 12 } : { length: 300, projection: 55, roseDiameter: 38, returnAngle: 90 }) }))
   const notify = (message: string) => { setToast(message); window.setTimeout(() => setToast(''), 3500) }
@@ -46,6 +47,9 @@ export default function App() {
   }, [design])
   useEffect(() => {
     fetch('/api/blender/status').then((response) => response.json()).then((data) => setBlenderStatus(data.connected ? 'connected' : 'offline')).catch(() => setBlenderStatus('offline'))
+  }, [])
+  useEffect(() => {
+    fetch('/api/cad/health').then((response) => setCadAvailable(response.ok)).catch(() => setCadAvailable(false))
   }, [])
   useEffect(() => {
     const close = (event: KeyboardEvent) => { if (event.key === 'Escape') setModal(null) }
@@ -69,6 +73,7 @@ export default function App() {
     setExportError(''); setExportUrl('')
     if (evaluateDfm(design).status === 'blocked') { setExportError('Resolve the blocking engineering findings before exporting this design.'); return }
     if (exportFormat === 'step' || exportFormat === 'dxf') {
+      if (!cadAvailable) { setExportError('CAD generation requires the local OpenCascade service. Run npm run dev, or configure VITE_CAD_API_URL for a hosted CAD service.'); return }
       try {
         const response = await fetch(`/api/cad/${exportFormat}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(design) })
         if (!response.ok) { const result = await response.json(); throw new Error(result.error) }
