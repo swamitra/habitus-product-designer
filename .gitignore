@@ -24,5 +24,9 @@ dist-ssr
 *.sw?
 public/exports/*.blend
 public/exports/*.glb
+public/exports/*.step
+public/exports/*.dxf
 __pycache__/
 .venv/
+.vercel
+.env*

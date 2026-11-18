@@ -131,6 +131,24 @@ h1 { font-size: 21px; letter-spacing: -.8px; font-weight: 600; margin: 10px 0 0;
 .spec-strip small { font-size: 10px; color: #8b9283; }
 .spec-strip .spec-material strong { font: 11px 'Manrope Variable', sans-serif; margin-top: 4px; }
 .action-panel { background: #fbfcf9; border-left: 1px solid var(--line); padding: 30px 22px 22px; display: flex; flex-direction: column; }
+.engineering-panel { margin-bottom: 24px; border-bottom: 1px solid var(--line); padding-bottom: 16px; }
+.engineering-summary { display: flex; align-items: flex-start; gap: 9px; width: 100%; border: 0; background: none; padding: 0; text-align: left; }
+.engineering-summary > svg { color: #7b914d; margin-top: 2px; flex-shrink: 0; }
+.engineering-panel.blocked .engineering-summary > svg { color: #a55343; }
+.engineering-panel.review .engineering-summary > svg { color: #a17b3f; }
+.engineering-summary span { display: flex; flex-direction: column; gap: 4px; }
+.engineering-summary strong { font-size: 10px; }
+.engineering-summary small { font-size: 8px; color: #8a9280; }
+.engineering-details { padding-top: 15px; }
+.engineering-details article { margin-bottom: 13px; }
+.engineering-details article strong { font-size: 9px; }
+.engineering-details article p, .engineering-details article small { display: block; font-size: 8px; line-height: 1.65; color: #7c8572; margin: 4px 0 0; }
+.engineering-details article small { color: #657a3e; }
+.brand-references { border-top: 1px solid var(--line); padding-top: 12px; }
+.brand-references > strong { font-size: 9px; }
+.brand-references a { display: flex; justify-content: space-between; padding: 6px 0; font-size: 8px; color: #657158; text-decoration: none; }
+.brand-references a span { color: #929a88; }
+.engineering-disclaimer { font-size: 8px; line-height: 1.6; color: #8a9280; }
 .action-heading > svg { color: #7c8c52; margin-bottom: 15px; }
 .action-heading h2 { font-size: 25px; line-height: 1.15; letter-spacing: -1px; font-weight: 500; margin: 0 0 12px; }
 .action-heading p { font-size: 10px; line-height: 1.6; color: #8a9082; margin: 0; }

@@ -45,7 +45,7 @@ export const finishes: { id: FinishId; name: string; color: string; metalness: n
 
 export const defaultDesign: HandleDesign = {
   name: 'Linear 01', type: 'pull', finish: 'graphite', profile: 'round',
-  length: 300, projection: 55, diameter: 19, roseDiameter: 38, returnAngle: 90,
+  length: 300, projection: 60, diameter: 19, roseDiameter: 38, returnAngle: 90,
   escutcheon: 'round-rose', doorThickness: 44, spindleSize: 8, spindleLength: 100,
   includePair: true, assemblyView: 'pair', fixing: 'concealed',
 }

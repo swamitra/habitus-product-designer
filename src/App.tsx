@@ -3,9 +3,11 @@ import { ArrowLineDown, ArrowUpRight, Check, CaretDown, Question, Cube, Download
 import { HandleModel } from './components/HandleModel'
 import { IdeaStudio } from './components/IdeaStudio'
 import { AssemblyControls } from './components/assembly/AssemblyControls'
-import { generateAssemblyStep } from './tools/cad/step'
+import { EngineeringPanel } from './components/engineering/EngineeringPanel'
+import { evaluateDfm } from './tools/dfm/solver'
 import { defaultCamSettings, generateDrillingNc } from './tools/cam/drilling'
 import { downloadText } from './tools/export/download'
+import { designFromLocation, encodeDesign } from './tools/specification/share'
 import { defaultDesign, downloadJson, finishes, presets, validateDesign, type HandleDesign, type HandleType, type ProfileId } from './lib/design'
 import './App.css'
 
@@ -17,7 +19,7 @@ function Dimension({ label, value, unit = 'mm', min, max, onChange }: { label: s
 
 export default function App() {
   const [design, setDesign] = useState<HandleDesign>(() => {
-    try { return JSON.parse(localStorage.getItem('aperture-design') || 'null') ?? defaultDesign } catch { return defaultDesign }
+    try { return designFromLocation() ?? JSON.parse(localStorage.getItem('aperture-design') || 'null') ?? defaultDesign } catch { return defaultDesign }
   })
   const [modal, setModal] = useState<Modal>(null)
   const [editorMode, setEditorMode] = useState<'idea' | 'details'>('idea')
@@ -26,14 +28,22 @@ export default function App() {
   const [toast, setToast] = useState('')
   const [sending, setSending] = useState(false)
   const [blenderStatus, setBlenderStatus] = useState<'checking' | 'connected' | 'offline'>('checking')
-  const [exportFormat, setExportFormat] = useState<'glb' | 'blend' | 'step' | 'nc'>('glb')
+  const [exportFormat, setExportFormat] = useState<'glb' | 'blend' | 'step' | 'dxf' | 'nc'>('glb')
   const [exportUrl, setExportUrl] = useState('')
   const [exportError, setExportError] = useState('')
   const update = <K extends keyof HandleDesign>(key: K, value: HandleDesign[K]) => setDesign((current) => ({ ...current, [key]: value }))
   const changeType = (type: HandleType) => setDesign((current) => ({ ...current, type, ...(type === 'lever' ? { length: 130, projection: 52, roseDiameter: 52, returnAngle: 12 } : { length: 300, projection: 55, roseDiameter: 38, returnAngle: 90 }) }))
   const notify = (message: string) => { setToast(message); window.setTimeout(() => setToast(''), 3500) }
 
-  useEffect(() => { localStorage.setItem('aperture-design', JSON.stringify(design)) }, [design])
+  useEffect(() => {
+    localStorage.setItem('aperture-design', JSON.stringify(design))
+    const versions = JSON.parse(localStorage.getItem('aperture-versions') || '[]') as { id: string; parent: string | null; design: HandleDesign; createdAt: string }[]
+    const id = encodeDesign(design).slice(0, 24)
+    if (!versions.some((version) => version.id === id)) {
+      versions.push({ id, parent: versions.at(-1)?.id ?? null, design, createdAt: new Date().toISOString() })
+      localStorage.setItem('aperture-versions', JSON.stringify(versions.slice(-50)))
+    }
+  }, [design])
   useEffect(() => {
     fetch('/api/blender/status').then((response) => response.json()).then((data) => setBlenderStatus(data.connected ? 'connected' : 'offline')).catch(() => setBlenderStatus('offline'))
   }, [])
@@ -57,10 +67,22 @@ export default function App() {
   }
   const exportDesign = async () => {
     setExportError(''); setExportUrl('')
-    if (exportFormat === 'step' || exportFormat === 'nc') {
-      const content = exportFormat === 'step' ? generateAssemblyStep(design) : generateDrillingNc(design, defaultCamSettings)
-      downloadText(content, `${design.name.replaceAll(' ', '-')}.${exportFormat}`, 'text/plain')
-      notify(exportFormat === 'step' ? 'STEP reference geometry downloaded.' : 'Drilling concept downloaded. Verify all CNC settings before use.')
+    if (evaluateDfm(design).status === 'blocked') { setExportError('Resolve the blocking engineering findings before exporting this design.'); return }
+    if (exportFormat === 'step' || exportFormat === 'dxf') {
+      try {
+        const response = await fetch(`/api/cad/${exportFormat}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(design) })
+        if (!response.ok) { const result = await response.json(); throw new Error(result.error) }
+        const blob = await response.blob()
+        const url = URL.createObjectURL(blob)
+        const anchor = document.createElement('a'); anchor.href = url; anchor.download = `${design.name.replaceAll(' ', '-')}.${exportFormat}`; anchor.click()
+        window.setTimeout(() => URL.revokeObjectURL(url), 1000)
+        notify(`${exportFormat.toUpperCase()} generated from the canonical B-Rep specification.`)
+      } catch (error) { setExportError(error instanceof Error ? error.message : 'CAD generation failed.') }
+      return
+    }
+    if (exportFormat === 'nc') {
+      downloadText(generateDrillingNc(design, defaultCamSettings), `${design.name.replaceAll(' ', '-')}.nc`, 'text/plain')
+      notify('Drilling concept downloaded. Verify all CNC settings before use.')
       return
     }
     if (exportFormat === 'glb') {
@@ -107,13 +129,13 @@ export default function App() {
         <div className="spec-strip"><div><span>{design.productType === 'door' ? 'WIDTH' : 'OVERALL LENGTH'}</span><strong>{design.productType === 'door' ? design.width : design.length}<small> mm</small></strong></div><div><span>{design.productType === 'door' ? 'HEIGHT' : 'PROJECTION'}</span><strong>{design.productType === 'door' ? design.height : design.projection}<small> mm</small></strong></div><div><span>{design.productType === 'door' ? 'THICKNESS' : 'BAR DIAMETER'}</span><strong>{design.productType === 'door' ? design.thickness : design.diameter}<small> mm</small></strong></div><div className="spec-material"><span>MATERIAL</span><strong>{finishes.find((finish) => finish.id === design.finish)?.name}</strong></div></div>
       </section>
 
-      <aside className="action-panel"><div className="action-heading"><Cube size={20} /><h2>From screen<br />to solid.</h2><p>Your design is ready for the next step.</p></div><div className="blender-card"><div className="blender-title"><span className="blender-symbol">b</span><div><strong>Blender</strong><span>Parametric connection</span></div><span className={`connection-dot ${blenderStatus}`} /></div><p>{blenderStatus === 'connected' ? 'Connected. Your model will be created in the active Blender scene.' : 'Create an editable model in Blender through your local MCP connection.'}</p><button className="primary-button" onClick={sendToBlender} disabled={sending}>{sending ? 'Creating model...' : 'Send to Blender'}<ArrowUpRight size={17} /></button><button className="text-button" onClick={() => setModal('help')}>{blenderStatus === 'connected' ? 'Connection settings' : 'How to connect'}<ArrowUpRight size={13} /></button></div><div className="secondary-actions"><button onClick={() => setModal('export')}><Download size={17} /><span>Export model<small>3D, CAD, or CNC drilling</small></span><ArrowUpRight size={14} /></button><button onClick={() => { downloadJson(design); notify('Design specification downloaded.') }}><ArrowLineDown size={17} /><span>Save specification<small>Dimensions and finish</small></span><ArrowUpRight size={14} /></button></div><div className="action-note"><span>Designed for the details.</span><p>Every dimension, profile, and finish is yours to define.</p></div></aside>
+      <aside className="action-panel"><EngineeringPanel design={design} /><div className="action-heading"><Cube size={20} /><h2>From screen<br />to solid.</h2><p>Your design is ready for the next step.</p></div><div className="blender-card"><div className="blender-title"><span className="blender-symbol">b</span><div><strong>Blender</strong><span>Parametric connection</span></div><span className={`connection-dot ${blenderStatus}`} /></div><p>{blenderStatus === 'connected' ? 'Connected. Your model will be created in the active Blender scene.' : 'Create an editable model in Blender through your local MCP connection.'}</p><button className="primary-button" onClick={sendToBlender} disabled={sending}>{sending ? 'Creating model...' : 'Send to Blender'}<ArrowUpRight size={17} /></button><button className="text-button" onClick={() => setModal('help')}>{blenderStatus === 'connected' ? 'Connection settings' : 'How to connect'}<ArrowUpRight size={13} /></button></div><div className="secondary-actions"><button onClick={() => setModal('export')}><Download size={17} /><span>Export model<small>3D, CAD, or CNC drilling</small></span><ArrowUpRight size={14} /></button><button onClick={async () => { const url = `${location.origin}${location.pathname}?design=${encodeDesign(design)}`; await navigator.clipboard.writeText(url); notify('Shareable design link copied.') }}><Link size={17} /><span>Share design<small>Link with full specification</small></span><ArrowUpRight size={14} /></button><button onClick={() => { downloadJson(design); notify('Design specification downloaded.') }}><ArrowLineDown size={17} /><span>Save specification<small>Dimensions and finish</small></span><ArrowUpRight size={14} /></button></div><div className="action-note"><span>Designed for the details.</span><p>Every dimension, profile, and finish is yours to define.</p></div></aside>
     </main>
     <footer className="statusbar"><span><span className="status-dot" /> All changes saved</span><span>APERTURE STUDIO <i /> BUILT FOR BLENDER</span><button onClick={() => setModal('library')}><Plus size={13} /> New from template</button></footer>
 
     {modal && <div className="modal-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget) setModal(null) }}><section className="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title"><button className="modal-close icon-button" onClick={() => setModal(null)} aria-label="Close dialog"><X size={20} /></button>
       {modal === 'library' && <><span className="eyebrow">STARTING POINTS</span><h2 id="modal-title">The handle library.</h2><p className="modal-intro">Choose a proportion, then make it your own.</p><div className="preset-list">{presets.map((preset) => <button key={preset.name} onClick={() => { setDesign(preset.design); setModal(null); notify(`${preset.name} loaded.`) }}><span className={`preset-drawing ${preset.design.type}`}><i /><i /><i /></span><span><strong>{preset.name}</strong><small>{preset.description}</small></span><ArrowUpRight size={18} /></button>)}</div></>}
-      {modal === 'export' && <><span className="eyebrow">TAKE IT FURTHER</span><h2 id="modal-title">Export your object.</h2><p className="modal-intro">A portable 3D model, generated from your current dimensions.</p><div className="export-options"><button className={exportFormat === 'glb' ? 'selected' : ''} onClick={() => { setExportFormat('glb'); setExportUrl(''); setExportError('') }}><strong>GLB</strong><span>Universal 3D format. No Blender required.</span></button><button className={exportFormat === 'blend' ? 'selected' : ''} onClick={() => { setExportFormat('blend'); setExportUrl(''); setExportError('') }}><strong>.blend</strong><span>Native, editable Blender scene. Requires connection.</span></button><button className={exportFormat === 'step' ? 'selected' : ''} onClick={() => { setExportFormat('step'); setExportUrl(''); setExportError('') }}><strong>STEP</strong><span>CAD reference geometry for the spindle and escutcheons.</span></button><button className={exportFormat === 'nc' ? 'selected' : ''} onClick={() => { setExportFormat('nc'); setExportUrl(''); setExportError('') }}><strong>.nc</strong><span>Drilling cycle concept. Machine verification required.</span></button></div>{exportFormat === 'nc' && <div className="cam-settings"><strong>Drilling setup</strong><span>8 mm drill, 6,000 rpm, 180 mm/min feed, 5 mm safe Z, -50 mm cutting depth.</span><small>Concept output only. Confirm the post-processor, tool, material, work offset, and machine limits with your CNC operator before running this file.</small></div>}{exportError && <p className="error-message">{exportError}</p>}{exportUrl ? <a className="primary-button download-link" href={exportUrl} download={`${design.name.replaceAll(' ', '-')}.${exportFormat}`}><Check size={17} /> Download {exportFormat.toUpperCase()}</a> : <button className="primary-button" onClick={exportDesign}>Prepare export <ArrowUpRight size={17} /></button>}</>}
+      {modal === 'export' && <><span className="eyebrow">TAKE IT FURTHER</span><h2 id="modal-title">Export your object.</h2><p className="modal-intro">A portable 3D model, generated from your current dimensions.</p><div className="export-options"><button className={exportFormat === 'glb' ? 'selected' : ''} onClick={() => { setExportFormat('glb'); setExportUrl(''); setExportError('') }}><strong>GLB</strong><span>Universal 3D format. No Blender required.</span></button><button className={exportFormat === 'blend' ? 'selected' : ''} onClick={() => { setExportFormat('blend'); setExportUrl(''); setExportError('') }}><strong>.blend</strong><span>Native, editable Blender scene. Requires connection.</span></button><button className={exportFormat === 'step' ? 'selected' : ''} onClick={() => { setExportFormat('step'); setExportUrl(''); setExportError('') }}><strong>STEP</strong><span>OpenCascade B-Rep assembly for CAD and CAM.</span></button><button className={exportFormat === 'dxf' ? 'selected' : ''} onClick={() => { setExportFormat('dxf'); setExportUrl(''); setExportError('') }}><strong>DXF</strong><span>2D drilling and mounting drawing in millimetres.</span></button><button className={exportFormat === 'nc' ? 'selected' : ''} onClick={() => { setExportFormat('nc'); setExportUrl(''); setExportError('') }}><strong>.nc</strong><span>Drilling cycle concept. Machine verification required.</span></button></div>{exportFormat === 'nc' && <div className="cam-settings"><strong>Drilling setup</strong><span>8 mm drill, 6,000 rpm, 180 mm/min feed, 5 mm safe Z, -50 mm cutting depth.</span><small>Concept output only. Confirm the post-processor, tool, material, work offset, and machine limits with your CNC operator before running this file.</small></div>}{exportError && <p className="error-message">{exportError}</p>}{exportUrl ? <a className="primary-button download-link" href={exportUrl} download={`${design.name.replaceAll(' ', '-')}.${exportFormat}`}><Check size={17} /> Download {exportFormat.toUpperCase()}</a> : <button className="primary-button" onClick={exportDesign}>Prepare export <ArrowUpRight size={17} /></button>}</>}
       {modal === 'help' && <><span className="eyebrow">A LITTLE GUIDANCE</span><h2 id="modal-title">Make it tangible.</h2><div className="guide-steps"><div><span>01</span><section><h3>Define your handle</h3><p>Choose a pull or lever, adjust its dimensions, and select a finish. Drag the model to inspect it from every angle.</p></section></div><div><span>02</span><section><h3>Connect Blender</h3><p>Start the included MCP service with <code>npm run mcp</code>. In Blender, enable the MCP for Blender add-on and click <strong>Connect to MCP</strong> in the 3D View sidebar.</p></section></div><div><span>03</span><section><h3>Create and export</h3><p>Send your design to the active Blender scene. Export a GLB directly from Aperture, or a native .blend file through the connection.</p></section></div></div><p className="guide-note"><Link size={16} /> The connection stays on your machine. No model data leaves your workspace.</p></>}
     </section></div>}
     {toast && <div className="toast" role="status"><Check size={17} />{toast}<button onClick={() => setToast('')} aria-label="Dismiss notification"><X size={15} /></button></div>}
