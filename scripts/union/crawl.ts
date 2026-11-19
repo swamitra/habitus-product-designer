@@ -34,13 +34,13 @@ const outputPath = resolve(outputDir, `${category}.json`)
 async function fetchHtml(url: string) {
   for (let attempt = 1; attempt <= 4; attempt++) {
     try {
-      const response = await fetch(url, { headers: { 'User-Agent': 'ApertureProductResearch/1.0 (engineering catalog indexer; respectful rate limit)', Accept: 'text/html' } })
+      const response = await fetch(url, { headers: { 'User-Agent': 'ApertureProductResearch/1.0 (engineering catalog indexer; respectful rate limit)', Accept: 'text/html' }, signal: AbortSignal.timeout(30000) })
       if (response.status === 429 || response.status >= 500) throw new Error(`HTTP ${response.status}`)
       if (!response.ok) throw new Error(`HTTP ${response.status} for ${url}`)
       return await response.text()
     } catch (error) {
       if (attempt === 4) throw error
-      await new Promise((resolve) => setTimeout(resolve, attempt * 2500))
+      await new Promise((resolve) => setTimeout(resolve, attempt * 5000))
     }
   }
   throw new Error('Unreachable')
@@ -80,7 +80,7 @@ async function main() {
   const firstPage = await fetchHtml(`${ORIGIN}/en/products/search.php?cid=${categories[category]}`)
   const $ = load(firstPage)
   const lastPage = Number($('.pagerList a[title="last page"]').attr('href')?.match(/pageID=(\d+)/)?.[1] ?? 1)
-  const checkpoint = await readFile(checkpointPath, 'utf8').then(JSON.parse).catch(() => ({ completedPages: [] as number[] }))
+  const checkpoint = await readFile(checkpointPath, 'utf8').then(JSON.parse).catch(() => ({ completedPages: [] as number[], failedPages: [] as number[], failedSkus: [] as string[] }))
   const models = new Map<string, UnionModel>((await readFile(outputPath, 'utf8').then(JSON.parse).catch(() => []) as UnionModel[]).map((model) => [model.sku, model]))
   let processed = 0
   for (let page = 1; page <= lastPage && processed < limit; page++) {
@@ -88,16 +88,23 @@ async function main() {
     const html = page === 1 ? firstPage : await fetchHtml(`${ORIGIN}/en/products/search.php?cid=${categories[category]}&pageID=${page}`)
     const page$ = load(html)
     const skus = [...new Set(page$('a[href*="detail.php?id="]').map((_index, anchor) => new URL(page$(anchor).attr('href') ?? '', ORIGIN).searchParams.get('id')).get().filter((sku): sku is string => Boolean(sku)))]
+    const failedSkus: string[] = []
     for (const sku of skus) {
       if (models.has(sku)) continue
       try {
         models.set(sku, parseModel(await fetchHtml(`${ORIGIN}/en/products/detail.php?id=${encodeURIComponent(sku)}`), sku, category))
         console.log(`[${models.size}] ${sku}`)
-      } catch (error) { console.error(`Failed ${sku}:`, error instanceof Error ? error.message : error) }
+        await writeFile(outputPath, JSON.stringify([...models.values()], null, 2))
+      } catch (error) {
+        failedSkus.push(sku)
+        console.error(`Failed ${sku}:`, error instanceof Error ? error.message : error)
+      }
       await new Promise((resolve) => setTimeout(resolve, delay))
     }
-    checkpoint.completedPages.push(page)
-    checkpoint.completedPages.sort((a, b) => a - b)
+    if (failedSkus.length === 0) checkpoint.completedPages.push(page)
+    else checkpoint.failedPages = [...new Set([...(checkpoint.failedPages ?? []), page])]
+    checkpoint.failedSkus = [...new Set([...(checkpoint.failedSkus ?? []), ...failedSkus])].filter((sku) => !models.has(sku))
+    checkpoint.completedPages = [...new Set(checkpoint.completedPages)].sort((a, b) => a - b)
     await writeFile(outputPath, JSON.stringify([...models.values()], null, 2))
     await writeFile(checkpointPath, JSON.stringify({ ...checkpoint, lastPage, updatedAt: new Date().toISOString() }, null, 2))
     processed++
