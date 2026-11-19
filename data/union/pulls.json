@@ -49555,5 +49555,82 @@
       }
     ],
     "crawledAt": "2026-11-19T03:16:34.688Z"
+  },
+  {
+    "sku": "H2052-58-082-L450",
+    "category": "pulls",
+    "sourceUrl": "https://www.artunion.co.jp/en/products/detail.php?id=H2052-58-082-L450",
+    "materialFinish": "Antibacterial Nylon, Ivory & Stainless Steel, Polished",
+    "sizeText": "L450mm",
+    "lengthMm": 450,
+    "centerToCenterMm": 425,
+    "installationText": "Mounting Screw M8Mounting Hole Diameter 10mm / On Glass Doors Diameter 16mm",
+    "weightText": "1kg",
+    "seriesText": null,
+    "imageReferences": [
+      {
+        "url": "https://www.artunion.co.jp/imgs/item/H2052x26D000ZHP.jpg",
+        "role": "product"
+      },
+      {
+        "url": "https://www.artunion.co.jp/imgs/size/H2052x26D900SZoW.jpg",
+        "role": "drawing"
+      }
+    ],
+    "crawledAt": "2026-11-19T03:17:16.665Z"
+  },
+  {
+    "sku": "T8170-15-032",
+    "category": "pulls",
+    "sourceUrl": "https://www.artunion.co.jp/en/products/detail.php?id=T8170-15-032",
+    "materialFinish": "Brass, Satin Finish",
+    "sizeText": "L611mm",
+    "lengthMm": 611,
+    "centerToCenterMm": 300,
+    "installationText": "Mounting Screw M8Mounting Hole Diameter 10mm / On Glass Doors Diameter 16mm",
+    "weightText": "3.2kg",
+    "seriesText": null,
+    "imageReferences": [
+      {
+        "url": "https://www.artunion.co.jp/imgs/item/T8170x14D000ZHP.jpg",
+        "role": "product"
+      },
+      {
+        "url": "https://www.artunion.co.jp/imgs/size/T8170x20D921SZXW.jpg",
+        "role": "drawing"
+      },
+      {
+        "url": "https://www.artunion.co.jp/imgs/image/CSM1xD589EHP.jpg",
+        "role": "installation"
+      },
+      {
+        "url": "https://www.artunion.co.jp/imgs/image/T2041xD400ZHaP.jpg",
+        "role": "installation"
+      }
+    ],
+    "crawledAt": "2026-11-19T03:17:21.629Z"
+  },
+  {
+    "sku": "T821-10-063",
+    "category": "pulls",
+    "sourceUrl": "https://www.artunion.co.jp/en/products/detail.php?id=T821-10-063",
+    "materialFinish": "Bronze, Baked Finish, Brown + Hairline & Brass, Oxidized, Olive Bronze",
+    "sizeText": "L680mm",
+    "lengthMm": 680,
+    "centerToCenterMm": 625,
+    "installationText": "Mounting Screw M8Mounting Hole Diameter 10mm / On Glass Doors Diameter 16mm",
+    "weightText": "8.1kg",
+    "seriesText": null,
+    "imageReferences": [
+      {
+        "url": "https://www.artunion.co.jp/imgs/item/T821x14D000ZHP.jpg",
+        "role": "product"
+      },
+      {
+        "url": "https://www.artunion.co.jp/imgs/size/T821x5D922SZW.jpg",
+        "role": "drawing"
+      }
+    ],
+    "crawledAt": "2026-11-19T03:17:23.832Z"
   }
 ]
